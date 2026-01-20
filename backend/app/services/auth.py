@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from app.models import User
 from app.schemas import RegisterRequest, RoleEnum, LoginRequest, Token
-from app.utils import hash_password, verify_password, create_access_token
+from app.utils import hash_password, verify_password, create_access_token, get_current_user, get_current_admin
 
 
 def register_user(request: RegisterRequest, db: Session) -> User:
@@ -52,4 +52,32 @@ def login_user(request: LoginRequest, db: Session) -> Token:
             "role": user.role.value
         }
     )
+    return Token(access_token=access_token, token_type="bearer")
+
+def login_with_form(username: str, password: str, db: Session) -> Token:
+    """Login para Swagger (usa form-data, username = email)"""
+    
+    user = db.query(User).filter(User.email == username).first()
+    
+    if not user or not verify_password(password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credenciales incorrectas",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Usuario desactivado"
+        )
+    
+    access_token = create_access_token(
+        data={
+            "sub": user.id_user,
+            "email": user.email,
+            "role": user.role.value
+        }
+    )
+    
     return Token(access_token=access_token, token_type="bearer")
