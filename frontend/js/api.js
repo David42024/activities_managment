@@ -3,7 +3,7 @@
 // Cliente API para comunicación con el backend
 // ============================================
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = 'https://activities-managment.onrender.com/api';
 
 // ============================================
 // UTILIDADES
