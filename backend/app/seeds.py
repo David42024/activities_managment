@@ -1,11 +1,13 @@
 # app/seeds.py
-from app.database import SessionLocal
+from app.database import SessionLocal, Base, engine
 from app.models import User, Category
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"])
 
 def run_seeds():
+    # 1️⃣ Crear todas las tablas que aún no existan
+    Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     
     try:
