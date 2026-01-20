@@ -142,20 +142,9 @@ def create(db: Session, request: ActivityCreate, current_user: User) -> Activity
                 detail="Categoría no encontrada o inactiva"
             )
     
-    # Verificar usuario asignado
-    if request.id_user:
-        assigned_user = db.query(User).filter(
-            User.id_user == request.id_user,
-            User.is_active == True
-        ).first()
-        if not assigned_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Usuario asignado no encontrado o inactivo"
-            )
-    
     new_activity = Activity(
         **request.model_dump(),
+        id_user=current_user.id_user,
         created_by=current_user.id_user,
         state=ActivityStateEnum.pendiente
     )

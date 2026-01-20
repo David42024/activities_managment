@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Gestión de Actividades</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    
+    <div class="w-full max-w-md">
+        <!-- Logo/Título -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">📋 Gestión de Actividades</h1>
+            <p class="text-gray-600 mt-2">Sistema de gestión operativa</p>
+        </div>
+
+        <!-- Card de Login/Register -->
+        <div class="card">
+            <!-- Tabs -->
+            <div class="flex border-b mb-6">
+                <button id="tab-login" class="flex-1 py-2 text-center font-medium text-primary-600 border-b-2 border-primary-600">
+                    Iniciar Sesión
+                </button>
+                <button id="tab-register" class="flex-1 py-2 text-center font-medium text-gray-500 hover:text-gray-700">
+                    Registrarse
+                </button>
+            </div>
+
+            <!-- Form Login -->
+            <form id="form-login" class="space-y-4">
+                <div>
+                    <label for="login-email" class="block text-sm font-medium text-gray-700 mb-1">
+                        Email
+                    </label>
+                    <input 
+                        type="email" 
+                        id="login-email" 
+                        class="input" 
+                        placeholder="tu@email.com"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">
+                        Contraseña
+                    </label>
+                    <input 
+                        type="password" 
+                        id="login-password" 
+                        class="input" 
+                        placeholder="••••••••"
+                        required
+                    >
+                </div>
+
+                <div id="login-error" class="text-red-500 text-sm hidden"></div>
+
+                <button type="submit" class="btn-primary w-full">
+                    Iniciar Sesión
+                </button>
+            </form>
+
+            <!-- Form Register -->
+            <form id="form-register" class="space-y-4 hidden">
+                <div>
+                    <label for="register-username" class="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre de usuario
+                    </label>
+                    <input 
+                        type="text" 
+                        id="register-username" 
+                        class="input" 
+                        placeholder="juanperez"
+                        required
+                        minlength="2"
+                    >
+                </div>
+
+                <div>
+                    <label for="register-email" class="block text-sm font-medium text-gray-700 mb-1">
+                        Email
+                    </label>
+                    <input 
+                        type="email" 
+                        id="register-email" 
+                        class="input" 
+                        placeholder="tu@email.com"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label for="register-password" class="block text-sm font-medium text-gray-700 mb-1">
+                        Contraseña
+                    </label>
+                    <input 
+                        type="password" 
+                        id="register-password" 
+                        class="input" 
+                        placeholder="Mínimo 6 caracteres"
+                        required
+                        minlength="6"
+                    >
+                </div>
+
+                <div>
+                    <label for="register-confirm" class="block text-sm font-medium text-gray-700 mb-1">
+                        Confirmar contraseña
+                    </label>
+                    <input 
+                        type="password" 
+                        id="register-confirm" 
+                        class="input" 
+                        placeholder="Repite tu contraseña"
+                        required
+                    >
+                </div>
+
+                <div id="register-error" class="text-red-500 text-sm hidden"></div>
+
+                <button type="submit" class="btn-primary w-full">
+                    Crear cuenta
+                </button>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <p class="text-center text-gray-500 text-sm mt-6">
+            Sistema de Gestión de Actividades Operativas
+        </p>
+    </div>
+
+    <script type="module">
+        import { auth } from '../js/api.js';
+        import { showToast } from '../js/utils.js';
+
+        // Si ya está autenticado, redirigir al dashboard
+        if (auth.isAuthenticated()) {
+            window.location.href = '/pages/dashboard.html';
+        }
+
+        // Elementos
+        const tabLogin = document.getElementById('tab-login');
+        const tabRegister = document.getElementById('tab-register');
+        const formLogin = document.getElementById('form-login');
+        const formRegister = document.getElementById('form-register');
+
+        // Cambiar tabs
+        tabLogin.addEventListener('click', () => {
+            tabLogin.classList.add('text-primary-600', 'border-b-2', 'border-primary-600');
+            tabLogin.classList.remove('text-gray-500');
+            tabRegister.classList.remove('text-primary-600', 'border-b-2', 'border-primary-600');
+            tabRegister.classList.add('text-gray-500');
+            formLogin.classList.remove('hidden');
+            formRegister.classList.add('hidden');
+        });
+
+        tabRegister.addEventListener('click', () => {
+            tabRegister.classList.add('text-primary-600', 'border-b-2', 'border-primary-600');
+            tabRegister.classList.remove('text-gray-500');
+            tabLogin.classList.remove('text-primary-600', 'border-b-2', 'border-primary-600');
+            tabLogin.classList.add('text-gray-500');
+            formRegister.classList.remove('hidden');
+            formLogin.classList.add('hidden');
+        });
+
+        // Login
+        formLogin.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errorDiv = document.getElementById('login-error');
+            
+            try {
+                errorDiv.classList.add('hidden');
+                showToast('¡Bienvenido!', 'success');
+                const result = await auth.login(email, password);
+                console.log('Token guardado:', localStorage.getItem('token'));
+                window.location.href = '/pages/dashboard.html';
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.classList.remove('hidden');
+            }
+        });
+
+        // Register
+        formRegister.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirm = document.getElementById('register-confirm').value;
+            const errorDiv = document.getElementById('register-error');
+            
+            // Validar contraseñas
+            if (password !== confirm) {
+                errorDiv.textContent = 'Las contraseñas no coinciden';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                errorDiv.classList.add('hidden');
+                await auth.register(username, email, password);
+                showToast('Cuenta creada. Ahora puedes iniciar sesión.', 'success');
+                tabLogin.click();
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

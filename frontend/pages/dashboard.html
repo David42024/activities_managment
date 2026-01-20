@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Gestión de Actividades</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-xl font-bold text-gray-900">📋 Gestión de Actividades</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="user-info" class="text-sm text-gray-600"></span>
+                    <a href="/pages/categories.html" id="link-categories" class="text-sm text-gray-600 hover:text-gray-900 hidden">
+                        Categorías
+                    </a>
+                    <button id="btn-logout" class="text-sm text-red-600 hover:text-red-800">
+                        Cerrar sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">Mis Actividades</h1>
+            <button id="btn-new-activity" class="btn-primary">
+                + Nueva Actividad
+            </button>
+        </div>
+
+        <!-- Filtros -->
+        <div class="card mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                    <select id="filter-state" class="input">
+                        <option value="">Todos</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="en_progreso">En Progreso</option>
+                        <option value="bloqueada">Bloqueada</option>
+                        <option value="completada">Completada</option>
+                        <option value="cancelada">Cancelada</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Prioridad</label>
+                    <select id="filter-priority" class="input">
+                        <option value="">Todas</option>
+                        <option value="baja">Baja</option>
+                        <option value="media">Media</option>
+                        <option value="alta">Alta</option>
+                        <option value="urgente">Urgente</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                    <select id="filter-category" class="input">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+                    <input type="text" id="filter-search" class="input" placeholder="Buscar...">
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Actividades -->
+        <div id="activities-container" class="space-y-4">
+            <!-- Se llena con JavaScript -->
+        </div>
+
+        <!-- Paginación -->
+        <div id="pagination" class="flex justify-center gap-2 mt-6">
+            <!-- Se llena con JavaScript -->
+        </div>
+    </main>
+
+    <!-- Modal Nueva/Editar Actividad -->
+    <div id="modal-activity" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4">
+            <div class="px-6 py-4 border-b">
+                <h3 id="modal-title" class="text-lg font-semibold text-gray-900">Nueva Actividad</h3>
+            </div>
+            <form id="form-activity" class="px-6 py-4 space-y-4">
+                <input type="hidden" id="activity-id">
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Título *</label>
+                    <input type="text" id="activity-title" class="input" required minlength="2">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                    <textarea id="activity-description" class="input" rows="3"></textarea>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Prioridad</label>
+                        <select id="activity-priority" class="input">
+                            <option value="baja">Baja</option>
+                            <option value="media" selected>Media</option>
+                            <option value="alta">Alta</option>
+                            <option value="urgente">Urgente</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Fecha límite</label>
+                        <input type="date" id="activity-due-date" class="input">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                    <select id="activity-category" class="input">
+                        <option value="">Sin categoría</option>
+                    </select>
+                </div>
+                
+                <div id="form-error" class="text-red-500 text-sm hidden"></div>
+            </form>
+            <div class="px-6 py-4 border-t flex justify-end gap-3">
+                <button id="btn-cancel" class="btn-secondary">Cancelar</button>
+                <button id="btn-save" class="btn-primary">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cambiar Estado -->
+    <div id="modal-state" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4">
+            <div class="px-6 py-4 border-b">
+                <h3 class="text-lg font-semibold text-gray-900">Cambiar Estado</h3>
+            </div>
+            <div class="px-6 py-4">
+                <input type="hidden" id="state-activity-id">
+                <div id="state-options" class="space-y-2">
+                    <!-- Se llena con JavaScript -->
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t flex justify-end">
+                <button id="btn-close-state" class="btn-secondary">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth, activities, categories } from '../js/api.js';
+        import { showToast, confirm, formatDate, getStateLabel, getPriorityLabel, showLoading } from '../js/utils.js';
+
+        // Verificar autenticación
+        if (!auth.isAuthenticated()) {
+            window.location.href = '/pages/login.html';
+        }
+
+        // Variables globales
+        let currentUser = null;
+        let categoriesList = [];
+        let currentPage = 1;
+        const perPage = 10;
+
+        // Transiciones válidas
+        const validTransitions = {
+            pendiente: ['en_progreso', 'cancelada'],
+            en_progreso: ['bloqueada', 'completada', 'cancelada'],
+            bloqueada: ['en_progreso', 'cancelada'],
+            completada: ['en_progreso'],
+            cancelada: []
+        };
+
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+
+        async function init() {
+            try {
+                // Obtener usuario actual
+                currentUser = await auth.getMe();
+                document.getElementById('user-info').textContent = `${currentUser.username} (${currentUser.role})`;
+                
+                // Mostrar link de categorías si es admin
+                if (currentUser.role === 'admin') {
+                    document.getElementById('link-categories').classList.remove('hidden');
+                }
+                
+                // Cargar categorías
+                const catData = await categories.getAll();
+                categoriesList = catData.categories;
+                populateCategorySelects();
+                
+                // Cargar actividades
+                loadActivities();
+                
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        function populateCategorySelects() {
+            const selects = ['filter-category', 'activity-category'];
+            selects.forEach(id => {
+                const select = document.getElementById(id);
+                const firstOption = select.options[0];
+                select.innerHTML = '';
+                select.appendChild(firstOption);
+                
+                categoriesList.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id_category;
+                    option.textContent = cat.name;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        // ============================================
+        // CARGAR ACTIVIDADES
+        // ============================================
+
+        async function loadActivities() {
+            const container = document.getElementById('activities-container');
+            showLoading(container);
+            
+            try {
+                const filters = {
+                    skip: (currentPage - 1) * perPage,
+                    limit: perPage,
+                    state: document.getElementById('filter-state').value,
+                    priority: document.getElementById('filter-priority').value,
+                    id_category: document.getElementById('filter-category').value,
+                    search: document.getElementById('filter-search').value
+                };
+                
+                const data = await activities.getAll(filters);
+                renderActivities(data.activities);
+                renderPagination(data.total);
+                
+            } catch (error) {
+                container.innerHTML = `<p class="text-red-500 text-center py-8">${error.message}</p>`;
+            }
+        }
+
+        function renderActivities(activitiesList) {
+            const container = document.getElementById('activities-container');
+            
+            if (activitiesList.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-gray-500">
+                        <p class="text-lg">No hay actividades</p>
+                        <p class="text-sm mt-2">Crea una nueva actividad para comenzar</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = activitiesList.map(activity => {
+                const category = categoriesList.find(c => c.id_category === activity.id_category);
+                const isOverdue = activity.due_date && new Date(activity.due_date) < new Date() && activity.state !== 'completada' && activity.state !== 'cancelada';
+                
+                return `
+                    <div class="card hover:shadow-lg transition-shadow">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <h3 class="text-lg font-semibold text-gray-900">${activity.title}</h3>
+                                    ${category ? `<span class="text-xs px-2 py-1 rounded" style="background-color: ${category.color}20; color: ${category.color}">${category.name}</span>` : ''}
+                                </div>
+                                ${activity.description ? `<p class="text-gray-600 text-sm mb-3">${activity.description}</p>` : ''}
+                                <div class="flex items-center gap-4 text-sm">
+                                    <span class="badge-${activity.state}">${getStateLabel(activity.state)}</span>
+                                    <span class="priority-${activity.priority}">${getPriorityLabel(activity.priority)}</span>
+                                    ${activity.due_date ? `
+                                        <span class="${isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'}">
+                                            📅 ${formatDate(activity.due_date)} ${isOverdue ? '(Vencida)' : ''}
+                                        </span>
+                                    ` : ''}
+                                </div>
+                            </div>
+                            <div class="flex gap-2 ml-4">
+                                <button onclick="openStateModal(${activity.id_activity}, '${activity.state}')" 
+                                        class="text-blue-600 hover:text-blue-800 text-sm"
+                                        ${validTransitions[activity.state].length === 0 ? 'disabled class="text-gray-400 cursor-not-allowed"' : ''}>
+                                    Estado
+                                </button>
+                                <button onclick="editActivity(${activity.id_activity})" class="text-gray-600 hover:text-gray-800 text-sm">
+                                    Editar
+                                </button>
+                                <button onclick="deleteActivity(${activity.id_activity})" class="text-red-600 hover:text-red-800 text-sm">
+                                    Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderPagination(total) {
+            const totalPages = Math.ceil(total / perPage);
+            const container = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            
+            if (currentPage > 1) {
+                html += `<button onclick="changePage(${currentPage - 1})" class="btn-secondary">Anterior</button>`;
+            }
+            
+            html += `<span class="px-4 py-2 text-gray-600">Página ${currentPage} de ${totalPages}</span>`;
+            
+            if (currentPage < totalPages) {
+                html += `<button onclick="changePage(${currentPage + 1})" class="btn-secondary">Siguiente</button>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        // ============================================
+        // MODAL ACTIVIDAD
+        // ============================================
+
+        function openActivityModal(activity = null) {
+            const modal = document.getElementById('modal-activity');
+            const title = document.getElementById('modal-title');
+            const form = document.getElementById('form-activity');
+            
+            form.reset();
+            document.getElementById('form-error').classList.add('hidden');
+            
+            if (activity) {
+                title.textContent = 'Editar Actividad';
+                document.getElementById('activity-id').value = activity.id_activity;
+                document.getElementById('activity-title').value = activity.title;
+                document.getElementById('activity-description').value = activity.description || '';
+                document.getElementById('activity-priority').value = activity.priority;
+                document.getElementById('activity-due-date').value = activity.due_date || '';
+                document.getElementById('activity-category').value = activity.id_category || '';
+            } else {
+                title.textContent = 'Nueva Actividad';
+                document.getElementById('activity-id').value = '';
+            }
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeActivityModal() {
+            document.getElementById('modal-activity').classList.add('hidden');
+        }
+
+        async function saveActivity() {
+            const id = document.getElementById('activity-id').value;
+            const data = {
+                title: document.getElementById('activity-title').value,
+                description: document.getElementById('activity-description').value || null,
+                priority: document.getElementById('activity-priority').value,
+                due_date: document.getElementById('activity-due-date').value || null,
+                id_category: document.getElementById('activity-category').value || null
+            };
+            
+            try {
+                if (id) {
+                    await activities.update(id, data);
+                    showToast('Actividad actualizada', 'success');
+                } else {
+                    await activities.create(data);
+                    showToast('Actividad creada', 'success');
+                }
+                closeActivityModal();
+                loadActivities();
+            } catch (error) {
+                document.getElementById('form-error').textContent = error.message;
+                document.getElementById('form-error').classList.remove('hidden');
+            }
+        }
+
+        // ============================================
+        // MODAL ESTADO
+        // ============================================
+
+        function openStateModal(activityId, currentState) {
+            const modal = document.getElementById('modal-state');
+            const options = document.getElementById('state-options');
+            
+            document.getElementById('state-activity-id').value = activityId;
+            
+            const available = validTransitions[currentState];
+            
+            if (available.length === 0) {
+                options.innerHTML = '<p class="text-gray-500">No hay transiciones disponibles</p>';
+            } else {
+                options.innerHTML = available.map(state => `
+                    <button onclick="changeState('${state}')" class="w-full text-left px-4 py-2 rounded hover:bg-gray-100">
+                        <span class="badge-${state}">${getStateLabel(state)}</span>
+                    </button>
+                `).join('');
+            }
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeStateModal() {
+            document.getElementById('modal-state').classList.add('hidden');
+        }
+
+        async function changeState(newState) {
+            const id = document.getElementById('state-activity-id').value;
+            
+            try {
+                await activities.changeState(id, newState);
+                showToast('Estado actualizado', 'success');
+                closeStateModal();
+                loadActivities();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        // ============================================
+        // ACCIONES
+        // ============================================
+
+        async function editActivity(id) {
+            try {
+                const activity = await activities.getById(id);
+                openActivityModal(activity);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        function deleteActivity(id) {
+            confirm('¿Estás seguro de eliminar esta actividad?', async () => {
+                try {
+                    await activities.delete(id);
+                    showToast('Actividad eliminada', 'success');
+                    loadActivities();
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            });
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            loadActivities();
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+
+        document.getElementById('btn-logout').addEventListener('click', () => auth.logout());
+        document.getElementById('btn-new-activity').addEventListener('click', () => openActivityModal());
+        document.getElementById('btn-cancel').addEventListener('click', closeActivityModal);
+        document.getElementById('btn-save').addEventListener('click', saveActivity);
+        document.getElementById('btn-close-state').addEventListener('click', closeStateModal);
+
+        // Filtros
+        ['filter-state', 'filter-priority', 'filter-category'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => {
+                currentPage = 1;
+                loadActivities();
+            });
+        });
+
+        let searchTimeout;
+        document.getElementById('filter-search').addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                currentPage = 1;
+                loadActivities();
+            }, 300);
+        });
+
+        // Cerrar modales con click fuera
+        document.getElementById('modal-activity').addEventListener('click', (e) => {
+            if (e.target.id === 'modal-activity') closeActivityModal();
+        });
+        document.getElementById('modal-state').addEventListener('click', (e) => {
+            if (e.target.id === 'modal-state') closeStateModal();
+        });
+
+        // Exponer funciones globales
+        window.openStateModal = openStateModal;
+        window.changeState = changeState;
+        window.editActivity = editActivity;
+        window.deleteActivity = deleteActivity;
+        window.changePage = changePage;
+
+        // Iniciar
+        init();
+    </script>
+</body>
+</html>

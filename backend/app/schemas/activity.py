@@ -22,7 +22,6 @@ class ActivityBase(BaseModel):
     description: str | None = None
     priority: PriorityEnum = PriorityEnum.media
     due_date: date | None = None
-    id_user: int | None = None
     id_category: int | None = None
 
 class ActivityCreate(ActivityBase):

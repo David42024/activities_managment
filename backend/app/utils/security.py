@@ -48,37 +48,41 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
     
     to_encode.update({"exp": expire})
     
     encoded_jwt = jwt.encode(
         to_encode, 
-        settings.SECRET_KEY, 
-        algorithm=settings.ALGORITHM
+        settings.secret_key, 
+        algorithm=settings.algorithm
     )
     
     return encoded_jwt
 
 
 def decode_token(token: str) -> TokenData | None:
-    """Decodifica y valida un JWT token"""
     try:
         payload = jwt.decode(
             token, 
-            settings.SECRET_KEY, 
-            algorithms=[settings.ALGORITHM]
+            settings.secret_key, 
+            algorithms=[settings.algorithm]
         )
-        user_id: int = payload.get("sub")
-        email: str = payload.get("email")
-        role: str = payload.get("role")
+        print(f"Payload: {payload}")  # Debug
+        
+        user_id = payload.get("sub")
+        email = payload.get("email")
+        role = payload.get("role")
+        
+        print(f"user_id: {user_id}, email: {email}, role: {role}")  # Debug
         
         if user_id is None:
             return None
             
-        return TokenData(user_id=user_id, email=email, role=role)
+        return TokenData(user_id=int(user_id), email=email, role=role)
         
-    except JWTError:
+    except JWTError as e:
+        print(f"JWTError: {e}")  # Debug - ¿Hay error aquí?
         return None
 
 
@@ -90,14 +94,9 @@ def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ) -> User:
-    """
-    Obtiene el usuario actual desde el token.
     
-    Uso en endpoint:
-        @router.get("/me")
-        def get_me(current_user: User = Depends(get_current_user)):
-            return current_user
-    """
+    print(f"Token recibido: {token[:50]}...")  # Debug
+    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="No se pudo validar las credenciales",
@@ -105,11 +104,16 @@ def get_current_user(
     )
     
     token_data = decode_token(token)
+    print(f"Token decodificado: {token_data}")  # Debug
     
     if token_data is None:
+        print("Token data es None!")  # Debug
         raise credentials_exception
     
     user = db.query(User).filter(User.id_user == token_data.user_id).first()
+    print(f"Usuario encontrado: {user}")  # Debug
+    
+    # ...resto del código
     
     if user is None:
         raise credentials_exception

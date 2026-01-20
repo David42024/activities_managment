@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categorías - Gestión de Actividades</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center gap-6">
+                    <span class="text-xl font-bold text-gray-900">📋 Gestión de Actividades</span>
+                    <a href="/pages/dashboard.html" class="text-sm text-gray-600 hover:text-gray-900">
+                        ← Volver al Dashboard
+                    </a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="user-info" class="text-sm text-gray-600"></span>
+                    <button id="btn-logout" class="text-sm text-red-600 hover:text-red-800">
+                        Cerrar sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">Gestión de Categorías</h1>
+            <button id="btn-new-category" class="btn-primary">
+                + Nueva Categoría
+            </button>
+        </div>
+
+        <!-- Lista de Categorías -->
+        <div id="categories-container" class="space-y-4">
+            <!-- Se llena con JavaScript -->
+        </div>
+    </main>
+
+    <!-- Modal Categoría -->
+    <div id="modal-category" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b">
+                <h3 id="modal-title" class="text-lg font-semibold text-gray-900">Nueva Categoría</h3>
+            </div>
+            <form id="form-category" class="px-6 py-4 space-y-4">
+                <input type="hidden" id="category-id">
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                    <input type="text" id="category-name" class="input" required minlength="2" maxlength="100">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                    <textarea id="category-description" class="input" rows="2"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                    <div class="flex items-center gap-3">
+                        <input type="color" id="category-color" class="h-10 w-20 rounded cursor-pointer" value="#3498db">
+                        <span id="color-preview" class="text-sm text-gray-500">#3498db</span>
+                    </div>
+                </div>
+                
+                <div id="form-error" class="text-red-500 text-sm hidden"></div>
+            </form>
+            <div class="px-6 py-4 border-t flex justify-end gap-3">
+                <button id="btn-cancel" class="btn-secondary">Cancelar</button>
+                <button id="btn-save" class="btn-primary">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth, categories } from '../js/api.js';
+        import { showToast, confirm, showLoading } from '../js/utils.js';
+
+        // Verificar autenticación
+        if (!auth.isAuthenticated()) {
+            window.location.href = '/pages/login.html';
+        }
+
+        let currentUser = null;
+
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+
+        async function init() {
+            try {
+                currentUser = await auth.getMe();
+                document.getElementById('user-info').textContent = `${currentUser.username} (${currentUser.role})`;
+                
+                // Solo admin puede ver esta página
+                if (currentUser.role !== 'admin') {
+                    showToast('Acceso denegado', 'error');
+                    window.location.href = '/pages/dashboard.html';
+                    return;
+                }
+                
+                loadCategories();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        // ============================================
+        // CARGAR CATEGORÍAS
+        // ============================================
+
+        async function loadCategories() {
+            const container = document.getElementById('categories-container');
+            showLoading(container);
+            
+            try {
+                const data = await categories.getAll();
+                renderCategories(data.categories);
+            } catch (error) {
+                container.innerHTML = `<p class="text-red-500 text-center py-8">${error.message}</p>`;
+            }
+        }
+
+        function renderCategories(categoriesList) {
+            const container = document.getElementById('categories-container');
+            
+            if (categoriesList.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-gray-500">
+                        <p class="text-lg">No hay categorías</p>
+                        <p class="text-sm mt-2">Crea una nueva categoría para comenzar</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = categoriesList.map(cat => `
+                <div class="card flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-4 h-4 rounded-full" style="background-color: ${cat.color}"></div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900">${cat.name}</h3>
+                            ${cat.description ? `<p class="text-sm text-gray-500">${cat.description}</p>` : ''}
+                        </div>
+                        ${!cat.is_active ? '<span class="badge bg-gray-200 text-gray-600">Inactiva</span>' : ''}
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="editCategory(${cat.id_category})" class="text-gray-600 hover:text-gray-800 text-sm">
+                            Editar
+                        </button>
+                        <button onclick="deleteCategory(${cat.id_category})" class="text-red-600 hover:text-red-800 text-sm">
+                            Eliminar
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ============================================
+        // MODAL
+        // ============================================
+
+        function openModal(category = null) {
+            const modal = document.getElementById('modal-category');
+            const title = document.getElementById('modal-title');
+            const form = document.getElementById('form-category');
+            
+            form.reset();
+            document.getElementById('form-error').classList.add('hidden');
+            document.getElementById('category-color').value = '#3498db';
+            document.getElementById('color-preview').textContent = '#3498db';
+            
+            if (category) {
+                title.textContent = 'Editar Categoría';
+                document.getElementById('category-id').value = category.id_category;
+                document.getElementById('category-name').value = category.name;
+                document.getElementById('category-description').value = category.description || '';
+                document.getElementById('category-color').value = category.color;
+                document.getElementById('color-preview').textContent = category.color;
+            } else {
+                title.textContent = 'Nueva Categoría';
+                document.getElementById('category-id').value = '';
+            }
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-category').classList.add('hidden');
+        }
+
+        async function saveCategory() {
+            const id = document.getElementById('category-id').value;
+            const data = {
+                name: document.getElementById('category-name').value,
+                description: document.getElementById('category-description').value || null,
+                color: document.getElementById('category-color').value
+            };
+            
+            try {
+                if (id) {
+                    await categories.update(id, data);
+                    showToast('Categoría actualizada', 'success');
+                } else {
+                    await categories.create(data);
+                    showToast('Categoría creada', 'success');
+                }
+                closeModal();
+                loadCategories();
+            } catch (error) {
+                document.getElementById('form-error').textContent = error.message;
+                document.getElementById('form-error').classList.remove('hidden');
+            }
+        }
+
+        // ============================================
+        // ACCIONES
+        // ============================================
+
+        async function editCategory(id) {
+            try {
+                const category = await categories.getById(id);
+                openModal(category);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        function deleteCategory(id) {
+            confirm('¿Estás seguro de eliminar esta categoría?', async () => {
+                try {
+                    await categories.delete(id);
+                    showToast('Categoría eliminada', 'success');
+                    loadCategories();
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            });
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+
+        document.getElementById('btn-logout').addEventListener('click', () => auth.logout());
+        document.getElementById('btn-new-category').addEventListener('click', () => openModal());
+        document.getElementById('btn-cancel').addEventListener('click', closeModal);
+        document.getElementById('btn-save').addEventListener('click', saveCategory);
+
+        document.getElementById('category-color').addEventListener('input', (e) => {
+            document.getElementById('color-preview').textContent = e.target.value;
+        });
+
+        document.getElementById('modal-category').addEventListener('click', (e) => {
+            if (e.target.id === 'modal-category') closeModal();
+        });
+
+        // Exponer funciones globales
+        window.editCategory = editCategory;
+        window.deleteCategory = deleteCategory;
+
+        // Iniciar
+        init();
+    </script>
+</body>
+</html>
