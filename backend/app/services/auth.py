@@ -49,7 +49,7 @@ def login_user(request: LoginRequest, db: Session) -> Token:
         data={
             "sub": str(user.id_user),
             "email": user.email,
-            "role": user.role.value
+            "role": user.role
         }
     )
     return Token(access_token=access_token, token_type="bearer")
