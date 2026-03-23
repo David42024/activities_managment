@@ -26,6 +26,7 @@ def register_user(request: RegisterRequest, db: Session) -> User:
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+    new_user.role = new_user.role.value if hasattr(new_user.role, "value") else new_user.role
     return new_user
 
 def login_user(request: LoginRequest, db: Session) -> Token:
