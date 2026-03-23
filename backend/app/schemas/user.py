@@ -24,15 +24,17 @@ class UserChangePassword(BaseModel):
     current_password: str
     new_password: str = Field(min_length=6, max_length=100)
 
-class UserResponse(UserBase):
-    """Usuario sin password"""
+class UserResponse(BaseModel):
     id_user: int
+    username: str
+    email: str
+    role: str
     is_active: bool
     created_at: datetime
     updated_at: datetime
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 class UserList(BaseModel):

@@ -37,9 +37,18 @@ function getHeaders(includeAuth = true) {
 }
 
 async function handleResponse(response) {
-    const data = await response.json();
-    
-    
+    let data;
+
+    try {
+        data = await response.json();
+    } catch {
+        throw new Error('Respuesta inválida del servidor');
+    }
+
+    if (!response.ok) {
+        throw new Error(data.detail || data.message || 'Error en la petición');
+    }
+
     return data;
 }
 
